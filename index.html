@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="remark,remarkjs,markdown,slideshow,presentation" />
+    <meta name="description" content="A simple, in-browser, markdown-driven slideshow tool." />
+    <title>Tour d'horizon des nouveautés de Python 3.5</title>
+    <link rel="stylesheet" type="text/css" href="theme.css">
+  </head>
+  <body>
+    <textarea id="source">
+
+name: inverse
+layout: true
+class: center, middle, inverse
+
+---
+
+# Tour d'horizon des nouveautés de Python 3.5
+## Sébastien Douche / @sdouche
+
+### https://github.com/sdouche/presentation-python35
+
+---
+layout: false
+
+.left-column[
+  ## Qui suis je ?
+]
+.right-column[
+  41 ans. Français. J'aime comprendre et résoudre des problèmes.
+
+- Geek depuis 1984
+
+- Fan de Logiciels Libres depuis 1995
+
+- Développeur (Python, Go)
+
+- Sysadmin (Linux / BSD)
+
+- Ex-responsable technique chez un éditeur logiciel français (2007-2014)
+
+- Intéressé par le Lifehacking
+
+- Adore les jeux de sociétés modernes
+
+- Motard (Honda CBR RR)
+
+- Aime l'humour noir, le second degré et les blagues pourries
+]
+
+---
+template: inverse
+
+# Objectif de cette présentation
+
+---
+class: center, middle
+
+## Présenter les nouveautés intéressantes de Python 3.5
+
+---
+template: inverse
+# Rappel sur Python 3
+
+---
+# Date des sorties
+
+|  Version   |      | Date       |
+|------------|------|------------|
+| Python 3.0 | :    | 2008-12-03 |
+| Python 3.1 | :    | 2009-06-26 |
+| Python 3.2 | :    | 2011-02-20 |
+| Python 3.3 | :    | 2012-09-29 |
+| Python 3.4 | :    | 2014-03-17 |
+| Python 3.5 | :    | 2015-09-03 |
+
+Python 2.7 est sortie le 03 juillet 2010 !
+
+---
+# Pourquoi passer à Python 3 ? (rappel)
+
+- ABI stable (Py 3.2)
+- Un seul build (Py 3.3)
+- Répertoire pycache (Py 3.2)
+- Espace de nom virtuel (Py 3.3)
+- venv (Py 3.3)
+- Ré-écriture de la GIL (Py 3.2)
+- Unicode par défaut (Py 3.0)
+- string vs byte (Py 3.0)
+- Argument par mot-clé (Py 3.0)
+- nonlocal (Py 3.0)
+- Nom qualifié (Py 3.3)
+- yield from (Py 3.3)
+- Chainage des exceptions (Py 3.0)
+- Exceptions OS et I/O retravaillées (Py 3.3)
+- Module ipaddress (Py 3.3)
+- Module concurrent.futures (Py 3.2)
+- Module pathlib (Py 3.4)
+- Module selectors (Py 3.4)
+- Module tracemalloc (Py 3.4)
+- Module asyncio (Py 3.4)
+- Module enum (Py 3.4)
+
+---
+# Pourquoi passer à Python 3 ? (rappel)
+
+Tour plus complet avec ma présentation :
+
+https://github.com/sdouche/presentation-passer-python3
+
+---
+template: inverse
+# Type hints
+## (PEP 484)
+
+---
+# Historique
+
+- 2013 : Rencontre avec Jukka Lehtosalo (mypy) à Pycon
+- 2014 : Bob Ippolito recommande mypy à EuroPython.red[*]
+- 2015 : PEP 484 - Type hints (GvR, Jukka Lehtosalo, Lukasz Langa)
+
+Proposition fortement inspirée du projet [mypy](http://mypy-lang.org/)
+
+.footnode[.red[*][What can python learn from Haskell? de Bob Ippolito](https://www.youtube.com/watch?v=eVChXmNjV7o)]
+
+---
+# Exemple de Bob Ippolito
+
+Pourquoi aucun outil Python ne détecte pas cette erreur simple :
+
+```python
+"""This module is nonsense!"""
+
+def main():
+    """What is this, JavaScript?"""
+    print(1 + "1")
+
+if __name__ == '__main__':
+    main()
+```
+.footnote[http://bob.ippoli.to/python-haskell-ep2014/#/python-nonsense]
+
+---
+# PEP
+
+La [PEP 3107](https://www.python.org/dev/peps/pep-3107/) (Python 3.0) qui ajoute une syntaxe pour l'annotation de fonction mais sans but précis.
+
+La [PEP 483](https://www.python.org/dev/peps/pep-0483/) décrit la théorie du Type Hints appelé le *gradual typing*, conceptualisé par Jereny Siek / Walid Taha (2006) et décrit dans un document [« Gradual Typing for Functional Languages»](http://scheme2006.cs.uchicago.edu/13-siek.pdf).
+
+La [PEP 484](https://www.python.org/dev/peps/pep-484/) décrit l'implémentation.
+
+Autres documentations :
+
+- https://en.wikipedia.org/wiki/Gradual_typing
+- http://wphomes.soic.indiana.edu/jsiek/what-is-gradual-typing/
+
+---
+# Rappel d'un type
+
+Un type est un ensemble de valeurs qui ont en commun des opérations.
+Une erreur de type est l'application d'une opération sur un type qui ne le supporte pas.
+
+En cas d'erreur, une exception `TypeError` est levée :
+
+```python
+>>> 'text' + 1
+Traceback (most recent call last):
+  File "<input>", line 1, in <module>
+TypeError: cannot concatenate 'str' and 'int' objects
+```
+
+En Python, nous avons le Duck typing, c'est à dire la vérification **dynamique** de la présence de l'opération (et uniquement de celle-ci).
+
+---
+# PEP 484
+
+La PEP 484 introduit une sémantique pour l'analyse statique de code. C'est une nouvelle relation du `is-consistent-with`. Assigner x à y est valide si le type x est *consistent* avec y. Sans annotation, on considère le type le plus général possible.
+
+Un exemple (compatible avec Python 3.x) :
+
+```Python
+def greeting(name: str) -> str:
+ return 'Hello ' + name
+
+if __name__ == '__main__':
+    greeting("Sébastien")
+```
+
+**Rappel** : Pas de vérification de type au runtime !
+
+
+---
+class: center, middle
+
+# A quoi cela peut il servir ?
+
+---
+# Développer plus vite
+
+On peut le voir une sorte de linting. GvR parle de “linting on steroids”.
+
+---
+# Meilleurs IDEs
+
+Plus grande robustesse et efficacité des IDE : il est par exemple bien pratique de disposer de la complétion automatique.
+
+Mais les facultés de manipulation du langage peut rendre la compréhension du code délicate.
+
+---
+# Documentation (1)
+
+On passe de :
+
+```python
+def format_unit(value, unit):
+    """
+    Formats the given value as a human readable string
+    using the given units.
+
+    :param float|int value: a numeric value
+    :param str unit: the unit for the value (kg, m, etc.)
+    :rtype: str
+    """
+
+    return '{} {}'.format(value, unit)
+```
+
+---
+# Documentation (2)
+
+A :
+
+```python
+from typing import Union
+
+def format_unit(value: Union[float, int], unit: str) -> str:
+    """
+    Formats the given value as a human readable string
+    using the given units.
+
+    :param value: a numeric value
+    :param unit: the unit for the value (kg, m, etc.)
+    """
+
+    return '{} {}'.format(value, unit)
+```
+
+Extension Sphinx [autodoc-typehints](https://pypi.python.org/pypi/sphinx-autodoc-typehints/)
+
+
+---
+# Les types acceptés
+
+Un *type hint* peut être :
+
+- une classe built-in
+- une classe ABC
+- un type du module types
+- une classe définit dans la librairie standard ou d'autres modules
+
+---
+# Alias de type
+
+```python
+Url = str
+
+def retry(url: Url, retry_count: int) -> None: ...
+```
+
+---
+# Any
+
+Type spécial qui indique un type non contraint :
+
+- tous les objets sont des instances de Any
+- toutes les classes sont des sous-classes de Any
+
+---
+# Union
+
+Union permet de définir un ensemble limité de types :
+
+```python
+from typing import Union
+
+def handle_employees(e: Union[Employee, Sequence[Employee]]) -> None:
+    if isinstance(e, Employee):
+        e = [e]
+    ...
+```
+---
+# Optional
+
+Si on veut spécifier un type ou `None` :
+
+```python
+Optional[int]
+```
+
+C'est identique à :
+
+```python
+Union[int, None]
+```
+
+---
+# Type générique (1)
+
+On peut spécifier un type générique :
+
+```python
+from typing import TypeVar
+
+T = TypeVar('T')
+```
+
+---
+# Type générique (2)
+
+On peut aussi éfinir un type générique en partant de la class `Generic` :
+
+```python
+
+from typing import TypeVar, Generic
+
+T = TypeVar('T')
+
+class LoggedVar(Generic[T]):
+    def __init__(self, value: T, name: str, logger: Logger) -> None:
+        self.name = name
+        self.logger = logger
+        self.value = value
+
+    def set(self, new: T) -> None:
+        self.log('Set ' + repr(self.value))
+        self.value = new
+
+    def get(self) -> T:
+        self.log('Get ' + repr(self.value))
+        return self.value
+
+    def log(self, message: str) -> None:
+        self.logger.info('{}: {}'.format(self.name message))
+```
+
+---
+# Callable
+
+Cela peut être un type appelable (utile pour des callbacks par exemple) :
+
+```python
+from typing import Callable
+
+def feeder(get_next_item: Callable[[], str]) -> None:
+    # Body
+
+def async_query(on_success: Callable[[int], None],
+                on_error: Callable[[int, Exception], None]) -> None:
+    # Body
+```
+
+---
+# Tuple, Set, List, Dict...
+
+On peut bien sûr définir les types de base, par exemple un tuple :
+
+```python
+Tuple[int, int, str]
+(0, 42, "Universe")
+```
+
+---
+# None
+
+Une expression None est considéré comme l'équivalent de `type(None)`.
+
+---
+# Mais aussi..
+
+- Iterable
+- Iterator
+- Container
+- Sequence
+- ItemsView / KeysView
+- Coroutine
+- Sized
+- ...
+
+---
+# Annotation par les commentaires
+
+On peut spécifier le type à l'aide de commentaires :
+
+```python
+x = []   # type: List[Employee]
+x, y, z = [], [], []  # type: List[int], List[int], List[str]
+x, y, z = [], [], []  # type: (List[int], List[int], List[str])
+x = [
+   1,
+   2,
+]  # type: List[int]
+```
+
+---
+# Cast explicite
+
+Il arrive que le *type checker* est besoin d'aide pour comprendre qu'une expression utilise un type plus contraint de ce que l'inférence laisse présager.
+
+
+```python
+from typing import List, cast
+
+def find_first_str(a: List[object]) -> str:
+    index = next(i for i, x in enumerate(a) if isinstance(x, str))
+    # We only get here if there's at least one string in a
+    return cast(str, a[index])
+```
+
+certains *type checkers* ne comprennent pas que a[index] est un `str` et non `Any`, mais nous le savons.
+
+---
+# Stub Files
+
+Fichier avec l'extension `.pyi` qui contient la signature des fonctions (le corps des classes, méthodes et fonctions est ignoré).
+
+Exemple avec le module standard time :
+
+```python
+def asctime(t: Union[Tuple[int, int, int, int, int, int, int, int, int],
+                     struct_time,
+                     None] = ...) -> str: ...
+
+def clock() -> float: ...
+
+def ctime(secs: Union[float, None] = ...) -> str: ...
+
+def gmtime(secs: Union[float, None] = ...) -> struct_time: ...
+
+```
+
+.footnote[Le dépôt [typeshed](https://github.com/python/typeshed/) contient des fichiers stub de la librairie standard]
+
+---
+# Overload (stub uniquement)
+
+Gestion du dispatch, utile principalement pour les built-ins polymorphe.
+
+```python
+
+@overload
+def __getitem__(self, i: int) -> int: ...
+
+@overload
+def __getitem__(self, i: slice) -> bytes: ...
+
+```
+
+---
+# Usage
+
+- c'est optionnel !
+- pas la peine de tout annoter (variable locale)
+- on peut stopper le type check soit :
+  - au niveau fichier `# type: ignore`
+  - au niveau de la classe / méthode `@no_type_check`
+
+---
+# Backport disponible
+
+Le module Typing existe pour Py2.7, Py3.2, Py3.3 et Py3.4 :
+
+https://pypi.python.org/pypi/typing
+
+---
+# Exemple 1 : Pycharm
+
+Pycharm (IDE Python)  de le faire de manière incomplète
+
+![](img/pycharm.png)
+
+---
+# Exemple 1 : Pycharm
+
+Il gère maintenant (encore imparfaitement) la PEP 484.
+
+---
+# Exemple 2 : avec un autre langage
+
+Dart est un langage créé chez Google qui, comme Python, est dynamique et supporte le gradual typing :
+
+![](img/dart1.png)
+![](img/dart2.png)
+
+---
+# Les défauts
+
+le Gradual Typing Python n'est pas aussi "costaud" qu'un langage nativement statique :
+
+- complétude : certaine signature ne sont pas exprimables
+- robustesse : du code validé statiquement peut casser
+
+Est ce du à sa jeunesse ?
+
+---
+template: inverse
+# Unpacking
+### [PEP 448](https://www.python.org/dev/peps/pep-0448/)
+
+---
+# Ce qu'on avait
+
+On peut faire ceci :
+
+```python
+>>> a, b = range(2)
+>>> a
+0
+>>> b
+1
+```
+
+---
+# Maintenant
+
+Nous pouvons faire ceci :
+
+```python
+>>> a, b, *rest = range(10)
+>>> a
+0
+>>> b
+1
+>>> rest
+[2, 3, 4, 5, 6, 7, 8, 9]
+```
+
+---
+# Maintenant
+
+*rest peut être n'importe où :
+
+```python
+>>> a, *rest, b = range(10)
+>>> a
+0
+>>> b
+9
+>>> rest
+[1, 2, 3, 4, 5, 6, 7, 8]
+>>> *rest, b = range(10)
+>> rest
+[0, 1, 2, 3, 4, 5, 6, 7, 8]
+>>> b
+9
+```
+
+---
+# Un exemple
+
+Avoir la première et la dernière ligne d'un fichier :
+
+```python
+>>> with open("using_python_to_profit") as f:
+... first, *_, last = f.readlines()
+>>> first
+'Step 1: Use Python 3\n'
+>>> last
+'Step 10: Profit!\n'
+```
+
+---
+# Autre exemple
+
+Refactorer une fonction :
+
+```python
+def f(a, b, *args):
+    stuff
+
+def f(*args):
+    a, b, *args = args
+    stuff
+```
+
+---
+template: inverse
+# async / await
+[PEP 492](https://www.python.org/dev/peps/pep-0492/)
+
+---
+# Définition d'une coroutine (rappel)
+
+Sorte de sous-routine qui permet les appels multiples (avec un mécanisme de suspend / resume), adapté pour la programmation multitache coopératif.
+
+Souvent implémentée par des générateurs.
+
+---
+# Coroutine avec générateur évolué (1)
+
+Depuis Python 2.5, nous pouvons implémenter les coroutines sous formes de générateurs évolués [PEP 342](https://www.python.org/dev/peps/pep-0342/), améliorés ensuite avec l'ajout du yield from [PEP 380](https://www.python.org/dev/peps/pep-0380/).
+
+```Python
+def counter (maximum):
+    i = 0
+    while i < maximum:
+        val = (yield i)
+        if val is not None:
+            i = val
+        else:
+            i += 1
+
+>>> it = counter(10)
+>>> print it.next()
+0
+>>> print it.next()
+1
+>>> print it.send(8)
+8
+>>> print it.next()
+9
+```
+
+---
+# Coroutine avec générateur évolué (2)
+
+Cette approche à plusieurs defauts, notamment :
+
+- Difficile de faire la différence entre générateur classique et générateur coroutine
+- Support limitée des appels asynchrones
+
+---
+# asyncio
+
+Avec Python 3.4 est arrivée la librairie *asyncio*, développé par GvR :
+
+```python
+@asyncio.coroutine
+def display_date(loop):
+   end_time = loop.time() + 5.0
+   while True:
+   print(datetime.datetime.now())
+   if (loop.time() + 1.0) >= end_time:
+       break
+   yield from asyncio.sleep(1)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(display_date(loop))
+loop.close()
+```
+
+---
+# async / await
+
+Nous avons maintenant async/await, qui permet de dire à un code synchrone d'être asynchrone et inversement :
+
+```python
+async def display_date(loop):
+   end_time = loop.time() + 5.0
+   while True:
+   print(datetime.datetime.now())
+   if (loop.time() + 1.0) >= end_time:
+       break
+   await asyncio.sleep(1)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(display_date(loop))
+loop.close()
+```
+
+---
+template: inverse
+# Multiplication de matrices
+[PEP 465](https://www.python.org/dev/peps/pep-0465/)
+
+---
+# Présentation
+
+Il fallait auparavant utiliser la librairie *Numpy*, maintenant on peut écrire :
+
+```python
+>>> a = np.array([[1, 0], [0, 1]])
+>>> b = np.array([[4, 1], [2, 2]])
+>>> a @ b
+array([[4, 1], [2, 2]])
+```
+
+N'importe quel objet peut surcharger `__matmul__` pour utiliser l'opérateur `@`.
+
+---
+template: inverse
+# Module zipapp
+[PEP 441](https://www.python.org/dev/peps/pep-0441/)
+
+---
+# Module zipapp
+
+Le module zipapp permet la création et l'exécution *directement* par l'interpréteur :
+
+```bash
+$ python -m zipapp myapp
+$ python myapp.pyz
+<output from myapp>
+```
+
+---
+template: inverse
+# Interpolation de bytes
+[PEP 461](https://www.python.org/dev/peps/pep-0461/)
+
+---
+# Interpolation de bytes
+
+Avec la séparation *str* et *byte*, certaines choses deviennent plus compliquer à faire, comme mélanger des données binaires et des segments de textes ASCII (dbfm, pdf, format des emails FTP, HTTP...).
+
+```python
+>>> b'you can %s bytes' % (b'interpolate')
+```
+
+---
+template: inverse
+# Disparition des fichiers pyo
+[PEP 488](https://www.python.org/dev/peps/pep-0488/)
+
+---
+# Disparation des fichiers pyo
+
+Pour rappel, les fichiers `.pyo` représentaient les compilations optimisées (`-o` ou `-oo`). Ils sont remplacées par un nouveau formalisme des fichiers `.pyc` :
+
+```
+0: foo.cpython-35.pyc
+1: foo.cpython-35.opt-1.pyc
+2: foo.cpython-35.opt-2.pyc
+```
+
+---
+template: inverse
+# os.scandir
+[PEP 471](https://www.python.org/dev/peps/pep-0471/)
+---
+# os.scandir
+
+La fonction os.walk() est très utile mais malheureusement lent, car il exécute un appel système stat() (ou GetFileAttributes() sous Windows) sur chaque fichier pour savoir si c'est un répertoire.
+
+os.scandir() implémente la même fonction mais sans ces appels couteux. Résutat :
+
+- 2-3x plus rapide sous POSIX
+- 8-9x plus rapide sous Windows
+
+```python
+for entry in os.scandir(path):
+   if not entry.name.startswith('.') and entry.is_file():
+       print(entry.name)
+```
+
+
+os.walk est réécrit pour utiliser os.scandir(), ce qui lui permet d'aller de 2 à 20x plus vite.
+
+---
+# Avec Python 3.5
+
+Mais l''opérateur n'était pas implémente pour les types builtins. En Python 3.5, vous pouvez maintenant remplacer ce code :
+
+```
+>>> a = np.array([[1, 0], [0, 1]])
+>>> b = np.array([[4, 1], [2, 2]])
+>>> np.dot(a, b)
+array([[4, 1],
+     [2, 2]])
+```
+
+Par :
+
+```python
+>>> a = np.array([[1, 0], [0, 1]])
+>>> b = np.array([[4, 1], [2, 2]])
+>>> a @ b
+array([[4, 1],
+   [2, 2]])
+```
+
+N'importe quel objet peut surcharger `__matmul__` pour utiliser l'opérateur `@`.
+
+---
+template: inverse
+# Divers
+
+---
+# Petite liste
+
+- collections.OrderedDict recodé en C (4x - 100x)
+- functools.lru_cache() partiellement recodé en C
+- subprocess.run() amélioré
+- module traceback amélioré
+- plus de lien avec une version particulière de VC++ sous Windows
+- Change StopIteration handling inside generators - [PEP 0479](https://www.python.org/dev/peps/pep-0479/)
+- Retry system calls failing with EINTR - [PEP 0475](https://www.python.org/dev/peps/pep-0475/)
+
+---
+template: inverse
+
+# Et Python 3.6 ?
+
+---
+# Format strings
+[PEP 498](https://www.python.org/dev/peps/pep-0498/)
+
+```python
+loc = 'Montréal'
+lang = 'Python'
+print(f"I'm in {loc} to speak about about {lang}")
+```
+
+---
+name: last-page
+template: inverse
+
+## That's all folks!
+
+    </textarea>
+    <script src="remark-0.13.0.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var hljs = remark.highlighter.engine;
+    </script>
+    <script src="remark.language.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+          highlightStyle: 'monokai',
+          highlightLanguage: 'remark'
+        }) ;
+    </script>
+  </body>
+</html>
